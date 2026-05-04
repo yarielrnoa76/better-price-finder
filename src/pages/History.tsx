@@ -20,10 +20,14 @@ const RESULT_TYPES: { value: ResultType | 'ALL'; label: string }[] = [
 export default function History() {
   const [history, setHistory] = useState<ProcessHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filter, setFilter] = useState<ResultType | 'ALL'>('ALL');
 
   useEffect(() => {
-    getProcessHistory().then(data => { setHistory(data); setLoading(false); });
+    getProcessHistory()
+      .then(data => setHistory(data))
+      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load history'))
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = filter === 'ALL' ? history : history.filter(h => h.ResultType === filter);
@@ -32,6 +36,20 @@ export default function History() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full">
+        <TopBar title="Search History" subtitle="Error loading data" />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-6 py-5 max-w-lg text-sm">
+            <p className="font-semibold mb-1">Failed to load history</p>
+            <p className="font-mono text-xs break-all">{error}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -77,7 +95,7 @@ export default function History() {
                   {filtered.map(row => (
                     <tr key={row.RunId} className="hover:bg-gray-50">
                       <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
-                        {format(new Date(row.SearchDate), 'MMM d, HH:mm')}
+                        {row.SearchDate ? format(new Date(row.SearchDate), 'MMM d, HH:mm') : '—'}
                       </td>
                       <td className="px-4 py-2.5 font-medium text-gray-800">{row.ProductName}</td>
                       <td className="px-4 py-2.5 text-center text-gray-600">#{row.AttemptNumber}</td>

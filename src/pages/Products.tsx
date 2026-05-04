@@ -16,6 +16,7 @@ export default function Products() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [toast, setToast] = useState('');
+  const [error, setError] = useState('');
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -32,9 +33,15 @@ export default function Products() {
 
   async function load() {
     setLoading(true);
-    const data = await getProducts();
-    setProducts(data);
-    setLoading(false);
+    try {
+      const data = await getProducts();
+      setProducts(data);
+    } catch (err) {
+      console.error('Error loading products:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load products');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function refresh() {
@@ -97,6 +104,20 @@ export default function Products() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full">
+        <TopBar title="Products" subtitle="Error loading data" />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-6 py-5 max-w-lg text-sm">
+            <p className="font-semibold mb-1">Failed to load products</p>
+            <p className="font-mono text-xs break-all">{error}</p>
+          </div>
+        </div>
       </div>
     );
   }
