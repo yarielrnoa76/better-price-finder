@@ -1,0 +1,157 @@
+import { useEffect, useState } from 'react';
+import { Plus, Search } from 'lucide-react';
+import type { Product, ProductFormData } from '../types';
+import { getProducts, createProduct, updateProduct } from '../services/googleSheetsService';
+import { triggerSearch } from '../services/n8nService';
+import { TopBar } from '../components/Layout/TopBar';
+import { ProductsTable } from '../components/Products/ProductsTable';
+import { ProductForm } from '../components/Products/ProductForm';
+import { Modal } from '../components/ui/Modal';
+import { Button } from '../components/ui/Button';
+
+export default function Products() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filtered, setFiltered] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Product | null>(null);
+  const [toast, setToast] = useState('');
+
+  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const q = search.toLowerCase();
+    setFiltered(q
+      ? products.filter(p =>
+          p.ProductName.toLowerCase().includes(q) ||
+          (p.AmazonASIN?.toLowerCase().includes(q)) ||
+          p.Status.toLowerCase().includes(q)
+        )
+      : products
+    );
+  }, [search, products]);
+
+  async function load() {
+    setLoading(true);
+    const data = await getProducts();
+    setProducts(data);
+    setLoading(false);
+  }
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3500);
+  }
+
+  async function handleCreate(data: ProductFormData) {
+    await createProduct(data);
+    await load();
+    setModalOpen(false);
+    showToast('Product created successfully.');
+  }
+
+  async function handleEdit(data: ProductFormData) {
+    if (!editTarget) return;
+    await updateProduct(editTarget.ProductId, {
+      ProductName:   data.ProductName,
+      AmazonASIN:    data.AmazonASIN,
+      TargetPrice:   data.TargetPrice,
+      SearchEnabled: data.SearchEnabled,
+      Notes:         data.Notes,
+      SearchFrequency: data.SearchFrequency,
+    });
+    await load();
+    setEditTarget(null);
+    showToast('Product updated.');
+  }
+
+  async function handleToggleSearch(product: Product) {
+    await updateProduct(product.ProductId, {
+      SearchEnabled: !product.SearchEnabled,
+      Status: !product.SearchEnabled ? 'ACTIVE' : 'PAUSED',
+    });
+    await load();
+    showToast(`Search ${product.SearchEnabled ? 'paused' : 'resumed'} for ${product.ProductName}.`);
+  }
+
+  async function handleRunSearch(product: Product) {
+    const result = await triggerSearch({
+      ProductId:   product.ProductId,
+      ProductName: product.ProductName,
+      AmazonASIN:  product.AmazonASIN,
+      TargetPrice: product.TargetPrice,
+      ManualRun:   true,
+    });
+    showToast(result.message);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <TopBar
+        title="Products"
+        subtitle={`${products.length} products tracked`}
+        action={
+          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
+            New Product
+          </Button>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="px-5 py-3 border-b flex items-center gap-3">
+            <Search className="h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name, ASIN or status..."
+              className="flex-1 text-sm outline-none text-gray-700 placeholder-gray-400"
+            />
+          </div>
+          <ProductsTable
+            products={filtered}
+            onToggleSearch={handleToggleSearch}
+            onRunSearch={handleRunSearch}
+            onEdit={p => setEditTarget(p)}
+          />
+        </div>
+      </div>
+
+      {/* Create modal */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Product">
+        <ProductForm
+          onSubmit={handleCreate}
+          onCancel={() => setModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Edit modal */}
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Product">
+        {editTarget && (
+          <ProductForm
+            initialData={editTarget}
+            onSubmit={handleEdit}
+            onCancel={() => setEditTarget(null)}
+          />
+        )}
+      </Modal>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg animate-fade-in">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
