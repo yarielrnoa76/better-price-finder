@@ -24,9 +24,14 @@ export async function triggerSearch(payload: N8nWebhookPayload): Promise<Trigger
     });
     return { status: 'success', message: `Search triggered for "${payload.ProductName}"` };
   } catch (err) {
-    const message = axios.isAxiosError(err)
-      ? err.response?.data?.message ?? err.message
-      : 'Unknown error';
+    let message: string;
+    if (axios.isAxiosError(err) && !err.response) {
+      message = 'Network error — verify that n8n has CORS enabled for this origin.';
+    } else if (axios.isAxiosError(err)) {
+      message = err.response?.data?.message ?? err.message;
+    } else {
+      message = 'Unknown error';
+    }
     return { status: 'error', message };
   }
 }
