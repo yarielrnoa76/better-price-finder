@@ -1,7 +1,6 @@
 import axios from 'axios';
 import type { N8nWebhookPayload } from '../types';
-
-const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
+import { getSettings } from './settingsService';
 
 export type TriggerStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -11,14 +10,16 @@ export interface TriggerResult {
 }
 
 export async function triggerSearch(payload: N8nWebhookPayload): Promise<TriggerResult> {
-  if (!WEBHOOK_URL) {
-    console.warn('VITE_N8N_WEBHOOK_URL is not set — simulating webhook call');
+  const { webhookUrl } = getSettings();
+
+  if (!webhookUrl) {
+    console.warn('Webhook URL is not configured — simulating webhook call');
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { status: 'success', message: 'Search triggered (mock — no webhook URL configured)' };
   }
 
   try {
-    await axios.post(WEBHOOK_URL, payload, {
+    await axios.post(webhookUrl, payload, {
       headers: { 'Content-Type': 'application/json' },
       timeout: 15000,
     });

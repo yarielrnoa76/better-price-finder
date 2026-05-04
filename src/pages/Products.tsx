@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search } from 'lucide-react';
 import type { Product, ProductFormData } from '../types';
 import { getProducts, createProduct, updateProduct } from '../services/googleSheetsService';
@@ -11,32 +11,35 @@ import { Button } from '../components/ui/Button';
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [filtered, setFiltered] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [toast, setToast] = useState('');
 
-  useEffect(() => { load(); }, []);
-
-  useEffect(() => {
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    setFiltered(q
+    return q
       ? products.filter(p =>
           p.ProductName.toLowerCase().includes(q) ||
           (p.AmazonASIN?.toLowerCase().includes(q)) ||
           p.Status.toLowerCase().includes(q)
         )
-      : products
-    );
+      : products;
   }, [search, products]);
+
+  useEffect(() => { load(); }, []);
 
   async function load() {
     setLoading(true);
     const data = await getProducts();
     setProducts(data);
     setLoading(false);
+  }
+
+  async function refresh() {
+    const data = await getProducts();
+    setProducts(data);
   }
 
   function showToast(msg: string) {
@@ -46,7 +49,7 @@ export default function Products() {
 
   async function handleCreate(data: ProductFormData) {
     await createProduct(data);
-    await load();
+    await refresh();
     setModalOpen(false);
     showToast('Product created successfully.');
   }
@@ -54,14 +57,14 @@ export default function Products() {
   async function handleEdit(data: ProductFormData) {
     if (!editTarget) return;
     await updateProduct(editTarget.ProductId, {
-      ProductName:   data.ProductName,
-      AmazonASIN:    data.AmazonASIN,
-      TargetPrice:   data.TargetPrice,
-      SearchEnabled: data.SearchEnabled,
-      Notes:         data.Notes,
+      ProductName:     data.ProductName,
+      AmazonASIN:      data.AmazonASIN,
+      TargetPrice:     data.TargetPrice,
+      SearchEnabled:   data.SearchEnabled,
+      Notes:           data.Notes,
       SearchFrequency: data.SearchFrequency,
     });
-    await load();
+    await refresh();
     setEditTarget(null);
     showToast('Product updated.');
   }
@@ -71,7 +74,7 @@ export default function Products() {
       SearchEnabled: !product.SearchEnabled,
       Status: !product.SearchEnabled ? 'ACTIVE' : 'PAUSED',
     });
-    await load();
+    await refresh();
     showToast(`Search ${product.SearchEnabled ? 'paused' : 'resumed'} for ${product.ProductName}.`);
   }
 
