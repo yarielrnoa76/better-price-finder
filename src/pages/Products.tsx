@@ -56,6 +56,9 @@ export default function Products() {
 
   async function handleEdit(data: ProductFormData) {
     if (!editTarget) return;
+    const statusUpdate = data.SearchEnabled !== editTarget.SearchEnabled
+      ? { Status: data.SearchEnabled ? ('ACTIVE' as const) : ('PAUSED' as const) }
+      : {};
     await updateProduct(editTarget.ProductId, {
       ProductName:     data.ProductName,
       AmazonASIN:      data.AmazonASIN,
@@ -63,6 +66,7 @@ export default function Products() {
       SearchEnabled:   data.SearchEnabled,
       Notes:           data.Notes,
       SearchFrequency: data.SearchFrequency,
+      ...statusUpdate,
     });
     await refresh();
     setEditTarget(null);
