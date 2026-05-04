@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"HTTP Status: %{http_code}\\\\nContent-Type: %{content_type}\\\\n\" -X POST \"https://flow.datagoldsolutions.com/webhook/better-price-search\" -H \"Content-Type: application/json\" -d \"{\\\\\"ProductId\\\\\":\\\\\"P-001\\\\\",\\\\\"ProductName\\\\\":\\\\\"Test Product\\\\\",\\\\\"TargetPrice\\\\\":100,\\\\\"ManualRun\\\\\":true}\" --max-time 15)",
+      "Bash(curl -s -L \"https://docs.google.com/spreadsheets/d/1iSaqW16rt-3hdK0NiBNTuWaZpHwNPnO2TmRf9M7cEBI/export?format=csv\" --max-time 10)"
+    ]
+  }
+}

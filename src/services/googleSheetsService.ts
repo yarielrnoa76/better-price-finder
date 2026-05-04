@@ -12,15 +12,16 @@ function useMock(): boolean {
 
 function sheetUrl(sheetId: string, range: string): string {
   const { googleApiKey } = getSettings();
-  return `${sheetsBaseUrl}/${sheetId}/values/${range}?key=${googleApiKey}`;
+  return `${sheetsBaseUrl}/${sheetId}/values/${encodeURIComponent(range)}?key=${googleApiKey}`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToProduct(headers: string[], row: any[]): Product {
   const obj: Record<string, string> = {};
   headers.forEach((h, i) => { obj[h] = row[i] ?? ''; });
+  const productId = obj.ProductId || `pid-${obj.ProductName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24)}`;
   return {
-    ProductId:       obj.ProductId,
+    ProductId:       productId,
     ProductName:     obj.ProductName,
     AmazonASIN:      obj.AmazonASIN || undefined,
     TargetPrice:     parseFloat(obj.TargetPrice) || 0,
@@ -82,7 +83,7 @@ export async function getProducts(): Promise<Product[]> {
     return [...mockProducts];
   }
   const { productsSheetId } = getSettings();
-  const res = await axios.get(sheetUrl(productsSheetId, 'Products!A1:P'));
+  const res = await axios.get(sheetUrl(productsSheetId, "'Hoja 1'!A1:T"));
   const [headers, ...rows] = res.data.values as string[][];
   return rows.map((row) => rowToProduct(headers, row));
 }
@@ -142,7 +143,7 @@ export async function getProcessHistory(productId?: string): Promise<ProcessHist
     return productId ? history.filter(h => h.ProductId === productId) : history;
   }
   const { processHistorySheetId } = getSettings();
-  const res = await axios.get(sheetUrl(processHistorySheetId, 'ProcessHistory!A1:N'));
+  const res = await axios.get(sheetUrl(processHistorySheetId, "'Hoja 1'!A1:K"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToProcessHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
@@ -157,7 +158,8 @@ export async function getPricesHistory(productId?: string): Promise<PricesHistor
     return productId ? history.filter(h => h.ProductId === productId) : history;
   }
   const { pricesHistorySheetId } = getSettings();
-  const res = await axios.get(sheetUrl(pricesHistorySheetId, 'PricesHistory!A1:H'));
+  if (!pricesHistorySheetId) return [];
+  const res = await axios.get(sheetUrl(pricesHistorySheetId, "'Hoja 1'!A1:H"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToPricesHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
