@@ -5,6 +5,10 @@ import { getSettings } from './settingsService';
 
 const sheetsBaseUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
 
+function parsePrice(s: string): number {
+  return parseFloat(s.replace(',', '.')) || 0;
+}
+
 function useMock(): boolean {
   const { useMockData, googleApiKey } = getSettings();
   return useMockData || !googleApiKey;
@@ -24,16 +28,17 @@ function rowToProduct(headers: string[], row: any[]): Product {
     ProductId:       productId,
     ProductName:     obj.ProductName,
     AmazonASIN:      obj.AmazonASIN || undefined,
-    TargetPrice:     parseFloat(obj.TargetPrice) || 0,
+    TargetPrice:     parsePrice(obj.TargetPrice),
     SearchEnabled:   obj.SearchEnabled === 'TRUE' || obj.SearchEnabled === 'true',
     Status:          (obj.Status as Product['Status']) || 'ACTIVE',
     LastSearchAt:    obj.LastSearchAt || undefined,
     NextSearchAt:    obj.NextSearchAt || undefined,
-    LastPrice:       obj.LastPrice ? parseFloat(obj.LastPrice) : undefined,
+    LastPrice:       obj.LastPrice ? parsePrice(obj.LastPrice) : undefined,
     LastUrl:         obj.LastUrl || undefined,
     LastResultTitle: obj.LastResultTitle || undefined,
     AlertSent:       obj.AlertSent === 'TRUE' || obj.AlertSent === 'true',
     Notes:           obj.Notes || undefined,
+    SearchFrequency: (obj.SearchFrequency as Product['SearchFrequency']) || undefined,
     CreatedAt:       obj.CreatedAt,
     UpdatedAt:       obj.UpdatedAt,
   };
@@ -52,8 +57,8 @@ function rowToProcessHistory(headers: string[], row: any[]): ProcessHistory {
     ResultType:     (obj.ResultType as ProcessHistory['ResultType']) || 'NOT_FOUND',
     AttemptNumber:  parseInt(obj.AttemptNumber) || 1,
     Found:          obj.Found === 'TRUE' || obj.Found === 'true',
-    CurrentPrice:   obj.CurrentPrice ? parseFloat(obj.CurrentPrice) : undefined,
-    TargetPrice:    parseFloat(obj.TargetPrice) || 0,
+    CurrentPrice:   obj.CurrentPrice ? parsePrice(obj.CurrentPrice) : undefined,
+    TargetPrice:    parsePrice(obj.TargetPrice),
     ResultTitle:    obj.ResultTitle || undefined,
     Url:            obj.Url || undefined,
     ErrorMessage:   obj.ErrorMessage || undefined,
@@ -143,7 +148,7 @@ export async function getProcessHistory(productId?: string): Promise<ProcessHist
     return productId ? history.filter(h => h.ProductId === productId) : history;
   }
   const { processHistorySheetId } = getSettings();
-  const res = await axios.get(sheetUrl(processHistorySheetId, "'Hoja 1'!A1:K"));
+  const res = await axios.get(sheetUrl(processHistorySheetId, "'Hoja 1'!A1:M"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToProcessHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
