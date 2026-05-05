@@ -16,7 +16,8 @@ function useMock(): boolean {
 
 function sheetUrl(sheetId: string, range: string): string {
   const { googleApiKey } = getSettings();
-  return `${sheetsBaseUrl}/${sheetId}/values/${encodeURIComponent(range)}?key=${googleApiKey}`;
+  const encoded = encodeURIComponent(range).replace(/'/g, '%27');
+  return `${sheetsBaseUrl}/${sheetId}/values/${encoded}?key=${googleApiKey}`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,7 +149,7 @@ export async function getProcessHistory(productId?: string): Promise<ProcessHist
     return productId ? history.filter(h => h.ProductId === productId) : history;
   }
   const { processHistorySheetId } = getSettings();
-  const res = await axios.get(sheetUrl(processHistorySheetId, "'Hoja 1'!A1:M"));
+  const res = await axios.get(sheetUrl(processHistorySheetId, "ProcessHistory!A1:M"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToProcessHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
@@ -164,7 +165,7 @@ export async function getPricesHistory(productId?: string): Promise<PricesHistor
   }
   const { pricesHistorySheetId } = getSettings();
   if (!pricesHistorySheetId) return [];
-  const res = await axios.get(sheetUrl(pricesHistorySheetId, "'Hoja 1'!A1:H"));
+  const res = await axios.get(sheetUrl(pricesHistorySheetId, "PricesHistory!A1:H"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToPricesHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
