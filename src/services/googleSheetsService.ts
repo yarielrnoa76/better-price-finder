@@ -149,7 +149,7 @@ export async function getProcessHistory(productId?: string): Promise<ProcessHist
     return productId ? history.filter(h => h.ProductId === productId) : history;
   }
   const { processHistorySheetId } = getSettings();
-  const res = await axios.get(sheetUrl(processHistorySheetId, "ProcessHistory!A1:M"));
+  const res = await axios.get(sheetUrl(processHistorySheetId, "A1:M"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToProcessHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
@@ -165,7 +165,7 @@ export async function getPricesHistory(productId?: string): Promise<PricesHistor
   }
   const { pricesHistorySheetId } = getSettings();
   if (!pricesHistorySheetId) return [];
-  const res = await axios.get(sheetUrl(pricesHistorySheetId, "PricesHistory!A1:H"));
+  const res = await axios.get(sheetUrl(pricesHistorySheetId, "A1:J"));
   const [headers, ...rows] = res.data.values as string[][];
   const history = rows.map((row) => rowToPricesHistory(headers, row));
   return productId ? history.filter(h => h.ProductId === productId) : history;
