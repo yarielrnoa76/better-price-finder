@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Pause, PlayCircle, Edit, History, ExternalLink } from 'lucide-react';
+import { Play, Pause, PlayCircle, Edit, History, ExternalLink, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Product } from '../../types';
 import { ProductStatusBadge } from '../ui/StatusBadge';
@@ -11,9 +11,10 @@ interface ProductsTableProps {
   onToggleSearch: (product: Product) => Promise<void>;
   onRunSearch: (product: Product) => Promise<void>;
   onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }
 
-export function ProductsTable({ products, onToggleSearch, onRunSearch, onEdit }: ProductsTableProps) {
+export function ProductsTable({ products, onToggleSearch, onRunSearch, onEdit, onDelete }: ProductsTableProps) {
   const navigate = useNavigate();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -121,6 +122,13 @@ export function ProductsTable({ products, onToggleSearch, onRunSearch, onEdit }:
                       : <Play className="h-3.5 w-3.5 text-green-500" />}
                     onClick={() => handleToggle(product)}
                     title={product.SearchEnabled ? 'Pause search' : 'Resume search'}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={<Trash2 className="h-3.5 w-3.5 text-red-400" />}
+                    onClick={() => onDelete(product)}
+                    title="Delete product"
                   />
                 </div>
               </td>

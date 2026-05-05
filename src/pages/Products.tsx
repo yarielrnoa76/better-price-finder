@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search } from 'lucide-react';
 import type { Product, ProductFormData } from '../types';
-import { getProducts, createProduct, updateProduct } from '../services/googleSheetsService';
+import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/googleSheetsService';
 import { triggerSearch } from '../services/n8nService';
 import { TopBar } from '../components/Layout/TopBar';
 import { ProductsTable } from '../components/Products/ProductsTable';
@@ -17,6 +17,7 @@ export default function Products() {
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [toast, setToast] = useState('');
   const [error, setError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -89,6 +90,13 @@ export default function Products() {
     showToast(`Search ${product.SearchEnabled ? 'paused' : 'resumed'} for ${product.ProductName}.`);
   }
 
+  async function handleDelete(product: Product) {
+    await deleteProduct(product.ProductId);
+    await refresh();
+    setDeleteTarget(null);
+    showToast(`"${product.ProductName}" deleted.`);
+  }
+
   async function handleRunSearch(product: Product) {
     const result = await triggerSearch({
       ProductId:   product.ProductId,
@@ -151,6 +159,7 @@ export default function Products() {
             onToggleSearch={handleToggleSearch}
             onRunSearch={handleRunSearch}
             onEdit={p => setEditTarget(p)}
+            onDelete={p => setDeleteTarget(p)}
           />
         </div>
       </div>
@@ -161,6 +170,23 @@ export default function Products() {
           onSubmit={handleCreate}
           onCancel={() => setModalOpen(false)}
         />
+      </Modal>
+
+      {/* Delete confirmation modal */}
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Product">
+        {deleteTarget && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete <span className="font-semibold">{deleteTarget.ProductName}</span>? This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button onClick={() => handleDelete(deleteTarget)} className="bg-red-600 hover:bg-red-700 text-white border-red-600">
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Edit modal */}

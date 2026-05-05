@@ -140,6 +140,16 @@ export async function updateProduct(productId: string, data: Partial<Product>): 
   console.warn('updateProduct real implementation requires row lookup', productId, data);
 }
 
+export async function deleteProduct(productId: string): Promise<void> {
+  if (useMock()) {
+    await delay(300);
+    const idx = mockProducts.findIndex(p => p.ProductId === productId);
+    if (idx !== -1) mockProducts.splice(idx, 1);
+    return;
+  }
+  console.warn('deleteProduct requires OAuth — not supported with API key only', productId);
+}
+
 export async function getProcessHistory(productId?: string): Promise<ProcessHistory[]> {
   if (useMock()) {
     await delay(300);
