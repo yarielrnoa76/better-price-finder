@@ -88,7 +88,7 @@ export default function Dashboard() {
                     >
                       {h.ProductName}
                     </button>
-                    <p className="text-xs text-gray-400">{format(new Date(h.SearchDate), 'MMM d, HH:mm')}</p>
+                    <p className="text-xs text-gray-400">{h.SearchDate && !isNaN(new Date(h.SearchDate).getTime()) ? format(new Date(h.SearchDate), 'MMM d, HH:mm') : '—'}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {h.CurrentPrice && <span className="text-sm font-medium text-gray-700">${h.CurrentPrice.toFixed(2)}</span>}
@@ -118,7 +118,7 @@ export default function Dashboard() {
                 <div key={i} className="flex items-center justify-between px-5 py-3">
                   <div>
                     <p className="text-sm font-medium text-gray-800">{p.ProductName}</p>
-                    <p className="text-xs text-gray-400">{format(new Date(p.Date), 'MMM d, yyyy')}</p>
+                    <p className="text-xs text-gray-400">{p.Date && !isNaN(new Date(p.Date).getTime()) ? format(new Date(p.Date), 'MMM d, yyyy') : '—'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-green-600">${p.Price.toFixed(2)}</p>

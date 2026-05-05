@@ -33,7 +33,7 @@ export function PricesHistoryTable({ history }: PricesHistoryTableProps) {
           {history.map((row, idx) => (
             <tr key={idx} className="hover:bg-gray-50">
               <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
-                {format(new Date(row.Date), 'MMM d, yyyy HH:mm')}
+                {row.Date && !isNaN(new Date(row.Date).getTime()) ? format(new Date(row.Date), 'MMM d, yyyy HH:mm') : '—'}
               </td>
               <td className="px-3 py-2.5 font-semibold text-green-600">${row.Price.toFixed(2)}</td>
               <td className="px-3 py-2.5 text-gray-600">${row.TargetPrice.toFixed(2)}</td>

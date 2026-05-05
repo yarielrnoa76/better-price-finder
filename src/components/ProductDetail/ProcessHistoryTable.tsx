@@ -29,7 +29,7 @@ export function ProcessHistoryTable({ history }: ProcessHistoryTableProps) {
           {history.map(row => (
             <tr key={row.RunId} className="hover:bg-gray-50">
               <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
-                {format(new Date(row.SearchDate), 'MMM d, HH:mm')}
+                {row.SearchDate && !isNaN(new Date(row.SearchDate).getTime()) ? format(new Date(row.SearchDate), 'MMM d, HH:mm') : '—'}
               </td>
               <td className="px-3 py-2.5 text-center font-medium text-gray-700">
                 #{row.AttemptNumber}

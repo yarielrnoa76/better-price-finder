@@ -181,7 +181,7 @@ export default function Products() {
             </p>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-              <Button onClick={() => handleDelete(deleteTarget)} className="bg-red-600 hover:bg-red-700 text-white border-red-600">
+              <Button variant="danger" onClick={() => handleDelete(deleteTarget)}>
                 Delete
               </Button>
             </div>
